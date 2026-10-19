@@ -1,76 +1,10 @@
-# ----------------------------------------
-# IntelliJ Gitignore
-# ----------------------------------------
-
-# User-specific stuff:
-.idea
-
-# File-based project format:
-.ipr
-.iws
-*.iml
-
-# IntelliJ
-/out/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# ----------------------------------------
-## OS Specific Gitignore
-# ----------------------------------------
-
-# OS X
-.DS_Store*
-Icon?
-._*
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Linux
-.directory
-*~
-
-# npm
-node_modules
+node_modules/
+dist/
+.wrangler/
+.cache/
+# pipeline output (lives in R2, not git)
+out/
 *.log
-*.gz
-
-# ----------------------------------------
-## Bower Gitignore
-# ----------------------------------------
-
-!public/extern/.gitignore
-public/extern/**/*
-
-# ----------------------------------------
-## App Specific
-# ----------------------------------------
-
-!public/javascripts/config.js
-**/torflow.js
-**/torflow.css
-**/templates/*.js
-**/extern.js
-**/extern.css
-!**/extern/fonts/
-!**/extern/css/
-.vagrant/
-map/
-data/relays/*
-containers/mysql/
-
-# ----------------------------------------
-## Deploy
-# ----------------------------------------
-
-deploy/app/package.json
-deploy/demo/package.json
-deploy/ingest/package.json
-
-deploy/app/build/
-deploy/demo/build/
-deploy/ingest/build/
+.DS_Store
+.env
+.dev.vars

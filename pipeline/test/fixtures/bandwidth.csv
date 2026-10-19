@@ -1,0 +1,5 @@
+# © The Tor Project, Inc. Licensed under CC BY 3.0 US.
+# Total relay bandwidth
+date,advbw,bwhist
+2026-09-30,1234.5,701.25
+2026-10-01,1240.1,NA

@@ -1,0 +1,121 @@
+name: Build & deploy
+
+# Fetches the latest Tor network data, builds the static site and publishes
+# it to GitHub Pages. Daily relay snapshots (days/*.json) are kept on the
+# `data` branch; everything else is regenerated from Tor Metrics each run.
+#
+# Run manually with mode=backfill to import history from CollecTor.
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: update (latest days) or backfill (history)
+        type: choice
+        options: [update, backfill]
+        default: update
+      from:
+        description: 'backfill: first date (YYYY-MM-DD)'
+        required: false
+      to:
+        description: 'backfill: last date (default: yesterday)'
+        required: false
+      every:
+        description: 'backfill: keep one day in N (1 = daily, 7 = weekly)'
+        required: false
+        default: '1'
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # push snapshots to the data branch
+  pages: write
+  id-token: write
+
+env:
+  OUT_DIR: out
+  CACHE_DIR: .cache
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+      - name: Check out snapshots (data branch)
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git fetch --depth=1 origin data; then
+            git worktree add -B data "$OUT_DIR" FETCH_HEAD
+          else
+            git worktree add --orphan -b data "$OUT_DIR"
+          fi
+
+      - name: Month stamp for the geolocation cache
+        id: month
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .cache/*.mmdb
+          key: geo-${{ steps.month.outputs.month }}
+
+      - name: Snapshot latest consensuses
+        if: github.event_name != 'workflow_dispatch' || inputs.mode == 'update'
+        run: node pipeline/update.js
+
+      - name: Backfill history
+        if: inputs.mode == 'backfill'
+        env:
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+          EVERY: ${{ inputs.every }}
+        run: node pipeline/backfill.js --from "$FROM" ${TO:+--to "$TO"} --every "${EVERY:-1}"
+
+      - name: Save new snapshots
+        # also after a failed backfill, so partial progress is kept
+        if: ${{ !cancelled() }}
+        working-directory: ${{ env.OUT_DIR }}
+        run: |
+          git add days
+          if git diff --cached --quiet; then
+            echo "No new snapshots."
+          else
+            git commit -q -m "Snapshots through $(ls days | tail -1 | cut -c1-10)"
+            git push origin data
+          fi
+
+      - name: Rebuild index from Tor Metrics
+        run: node pipeline/publish.js
+
+      - name: Build site
+        run: |
+          npm run build
+          mkdir -p dist/data
+          cp -r "$OUT_DIR"/index.json "$OUT_DIR"/days "$OUT_DIR"/clients dist/data/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

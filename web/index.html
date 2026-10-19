@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>TorFlow</title>
+  <meta name="description" content="Data flow in the Tor network: relays, bandwidth and users around the world, updated daily.">
+  <meta name="theme-color" content="#111111">
+  <meta property="og:title" content="TorFlow — data flow in the Tor network">
+  <meta property="og:description" content="Relays, bandwidth and users around the world, updated daily.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+  <div class="main">
+    <header>
+      <h1>TorFlow</h1>
+      <div class="header-stats" aria-live="polite"></div>
+    </header>
+    <div class="top-buttons">
+      <button class="large-button share-button" title="Share this view" aria-label="Share this view"></button>
+      <button class="large-button summary-button" title="About" aria-label="About"></button>
+      <a class="large-button github-button" title="Source on GitHub" aria-label="Source on GitHub"
+         href="https://github.com/unchartedsoftware/torflow" target="_blank" rel="noopener"></a>
+    </div>
+    <div class="map-controls"></div>
+    <div class="date-controls"></div>
+    <div id="map"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
